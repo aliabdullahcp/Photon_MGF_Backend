@@ -4,16 +4,14 @@ using ExitGames.Logging;
 using ExitGames.Logging.Log4Net;
 using log4net;
 using log4net.Config;
+using Microsoft.Extensions.Configuration;
 using MultiplayerGameFramework;
-using MultiplayerGameFramework.Interfaces;
 using MultiplayerGameFramework.Implementation.Config;
 using MultiplayerGameFramework.Interfaces.Support;
-
 using Photon.SocketServer;
 using Photon.SocketServer.ServerToServer;
 using System.IO;
 using LogManager = ExitGames.Logging.LogManager;
-using Microsoft.Extensions.Configuration;
 
 namespace MGF_Photon
 {
