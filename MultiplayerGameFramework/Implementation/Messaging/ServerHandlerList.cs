@@ -14,14 +14,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
         private readonly IDefaultResponseHandler<IServerPeer> _defaultResponseHandler;
         private readonly IDefaultEventHandler<IServerPeer> _defaultEventHandler;
 
-        private readonly Dictionary<int, IHandler<IServerPeer>> _requestCodeHandlerList;
-        private readonly Dictionary<int, IHandler<IServerPeer>> _requestSubCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _requestCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _requestSubCodeHandlerList;
 
-        private readonly Dictionary<int, IHandler<IServerPeer>> _responseCodeHandlerList;
-        private readonly Dictionary<int, IHandler<IServerPeer>> _responseSubCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _responseCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _responseSubCodeHandlerList;
 
-        private readonly Dictionary<int, IHandler<IServerPeer>> _eventCodeHandlerList;
-        private readonly Dictionary<int, IHandler<IServerPeer>> _eventSubCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _eventCodeHandlerList;
+        private readonly List<IHandler<IServerPeer>> _eventSubCodeHandlerList;
 
         public ServerHandlerList(IEnumerable<IHandler<IServerPeer>> handlers,
             IDefaultRequestHandler<IServerPeer> defaultRequestHandler,
@@ -32,14 +32,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
             _defaultResponseHandler = defaultResponseHandler;
             _defaultEventHandler = defaultEventHandler;
 
-            _requestCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
-            _requestSubCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
+            _requestCodeHandlerList = new List<IHandler<IServerPeer>>();
+            _requestSubCodeHandlerList = new List<IHandler<IServerPeer>>();
 
-            _responseCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
-            _responseSubCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
+            _responseCodeHandlerList = new List<IHandler<IServerPeer>>();
+            _responseSubCodeHandlerList = new List<IHandler<IServerPeer>>();
 
-            _eventCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
-            _eventSubCodeHandlerList = new Dictionary<int, IHandler<IServerPeer>>();
+            _eventCodeHandlerList = new List<IHandler<IServerPeer>>();
+            _eventSubCodeHandlerList = new List<IHandler<IServerPeer>>();
 
             foreach (var handler in handlers)
             {
@@ -54,13 +54,13 @@ namespace MultiplayerGameFramework.Implementation.Messaging
             //Request
             if((handler.Type & MessageType.Request) == MessageType.Request)
             {
-                if(handler.SubCode.HasValue && !_requestSubCodeHandlerList.ContainsKey(handler.SubCode.Value))
+                if(handler.SubCode.HasValue)
                 {
-                    _requestSubCodeHandlerList.Add(handler.SubCode.Value, handler);
+                    _requestSubCodeHandlerList.Add(handler);
                     registered = true;
-                }else if(!_requestCodeHandlerList.ContainsKey(handler.Code) && !handler.SubCode.HasValue)
+                }else
                 {
-                    _requestCodeHandlerList.Add(handler.Code, handler);
+                    _requestCodeHandlerList.Add(handler);
                     registered = true;
                 }
             }
@@ -68,14 +68,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
             //Response
             if ((handler.Type & MessageType.Response) == MessageType.Response)
             {
-                if (handler.SubCode.HasValue && !_responseSubCodeHandlerList.ContainsKey(handler.SubCode.Value))
+                if (handler.SubCode.HasValue)
                 {
-                    _responseSubCodeHandlerList.Add(handler.SubCode.Value, handler);
+                    _responseSubCodeHandlerList.Add(handler);
                     registered = true;
                 }
-                else if (!_responseCodeHandlerList.ContainsKey(handler.Code) && !handler.SubCode.HasValue)
+                else
                 {
-                    _responseCodeHandlerList.Add(handler.Code, handler);
+                    _responseCodeHandlerList.Add(handler);
                     registered = true;
                 }
             }
@@ -83,14 +83,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
             //Event
             if ((handler.Type & MessageType.Async) == MessageType.Async)
             {
-                if (handler.SubCode.HasValue && !_eventSubCodeHandlerList.ContainsKey(handler.SubCode.Value))
+                if (handler.SubCode.HasValue)
                 {
-                    _eventSubCodeHandlerList.Add(handler.SubCode.Value, handler);
+                    _eventSubCodeHandlerList.Add(handler);
                     registered = true;
                 }
-                else if (!_eventCodeHandlerList.ContainsKey(handler.Code) && !handler.SubCode.HasValue)
+                else
                 {
-                    _eventCodeHandlerList.Add(handler.Code, handler);
+                    _eventCodeHandlerList.Add(handler);
                     registered = true;
                 }
             }
@@ -101,12 +101,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
         public bool HandleMessage(IMessage message, IServerPeer serverPeer)
         {
             bool handled = false;
+            IEnumerable<IHandler<IServerPeer>> handlers;
             switch (message.Type)
             {
                 case MessageType.Request:
-                    if(message.SubCode.HasValue && _requestSubCodeHandlerList.ContainsKey(message.SubCode.Value))
+                    handlers = _requestCodeHandlerList.Where(h => h.Code == message.Code && h.SubCode == message.SubCode);
+                    if(handlers == null || handlers.Count() == 0)
                     {
-                        _requestSubCodeHandlerList[message.SubCode.Value].HandleMessage(message, serverPeer);
+                        handlers = _requestCodeHandlerList.Where(h => h.Code == message.Code);
                         handled = true;
                     }
                     else if(!message.SubCode.HasValue && _requestCodeHandlerList.ContainsKey(message.Code))

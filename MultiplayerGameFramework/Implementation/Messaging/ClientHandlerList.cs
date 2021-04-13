@@ -10,13 +10,13 @@ namespace MultiplayerGameFramework.Implementation.Messaging
 {
     public class ClientHandlerList : IHandlerList<IClientPeer>
     {
-        private readonly Dictionary<int, IHandler<IClientPeer>> _requestSubCodeHandlerList;
-        private readonly Dictionary<int, IHandler<IClientPeer>> _requestCodeHandlerList;
+        private readonly List<IHandler<IClientPeer>> _requestSubCodeHandlerList;
+        private readonly List<IHandler<IClientPeer>> _requestCodeHandlerList;
 
         public ClientHandlerList(IEnumerable<IHandler<IClientPeer>> handlers)
         {
-            _requestSubCodeHandlerList = new Dictionary<int, IHandler<IClientPeer>>();
-            _requestCodeHandlerList = new Dictionary<int, IHandler<IClientPeer>>();
+            _requestSubCodeHandlerList = new List<IHandler<IClientPeer>>();
+            _requestCodeHandlerList = new List<IHandler<IClientPeer>>();
 
             foreach (var handler in handlers)
             {
@@ -29,14 +29,14 @@ namespace MultiplayerGameFramework.Implementation.Messaging
             var registered = false;
             if((handler.Type & MessageType.Request) == MessageType.Request) //Guarantees that we are having a request type hanler comming in
             {
-                if(handler.SubCode.HasValue && !_requestSubCodeHandlerList.ContainsKey(handler.SubCode.Value))
+                if(handler.SubCode.HasValue)
                 {
-                    _requestSubCodeHandlerList.Add(handler.SubCode.Value, handler);
+                    _requestSubCodeHandlerList.Add(handler);
                     registered = true;
                 }
-                else if (!_requestCodeHandlerList.ContainsKey(handler.Code) && !handler.SubCode.HasValue)
+                else
                 {
-                    _requestCodeHandlerList.Add(handler.Code, handler);
+                    _requestCodeHandlerList.Add(handler);
                     registered = true;
                 }
             }
